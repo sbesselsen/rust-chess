@@ -191,6 +191,23 @@ impl Board {
         // Make the move.
         self.squares[target_index] = self.squares[index];
         self.squares[index] = Square::Empty;
+
+        // Handle en passant captures.
+        if let Some(en_passant_index) = self.en_passant_capturable {
+            if en_passant_index == target_index {
+                // We are making an en passant capture. Remove the captured piece.
+                match self.squares[target_index] {
+                    Square::Occupied(Piece(Color::White, Kind::Pawn)) => {
+                        self.squares[target_index - 8] = Square::Empty;
+                    },
+                    Square::Occupied(Piece(Color::Black, Kind::Pawn)) => {
+                        self.squares[target_index + 8] = Square::Empty;
+                    },
+                    _ => {}
+                }
+            }
+        }
+
         self.en_passant_capturable = None;
 
         // Process the board based on what we have done.
@@ -271,16 +288,23 @@ impl fmt::Display for Board {
 }
 
 fn main() {
+    test_en_passant();
+}
+
+fn test_en_passant() {
     let mut board = Board::create_empty();
-    board.setup();
+    board.squares[1 * 8] = Square::Occupied(Piece(Color::White, Kind::Pawn));
+    board.squares[3 * 8 + 1] = Square::Occupied(Piece(Color::Black, Kind::Pawn));
 
-    // println!("Start: \n{}", board);
-    let next_boards_1 = next_boards(&board, Color::White);
+    let boards_list = vec![board];
+    println!("Start: \n{}", board);
 
-    // See if we can get some rook moves here.
-    // let next_boards_2 = next_boards(&next_boards_1[0], Color::White);
-    for next_board in next_boards_1 {
-        println!("{}", next_board);
+    let boards_list = next_boards(&board, Color::White);
+    for next_board in &boards_list {
+        let boards_list = next_boards(next_board, Color::Black);
+        for next_board in boards_list {
+            println!("{}", next_board);
+        }
     }
 }
 
@@ -467,8 +491,22 @@ fn add_pawn_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Bo
                 }
             }
         }
-        // TODO: capture
-        // TODO: en passant capture
+        let capture_offsets = [(move_direction, -1), (move_direction, 1)];
+        for (rank_offset, file_offset) in &capture_offsets {
+            if let Some(target_index) = index_board_offset(index, *rank_offset, *file_offset) {
+                if let Square::Occupied(Piece(piece_color, _)) = board.squares[target_index] {
+                    if piece_color != color {
+                        // Can capture this piece.
+                        boards.push(board.clone_move_piece(index, target_index));
+                    }
+                }
+                if let Some(en_passant_index) = board.en_passant_capturable {
+                    if target_index == en_passant_index {
+                        boards.push(board.clone_move_piece(index, target_index));
+                    }
+                }
+            }
+        }
     }
 }
 
