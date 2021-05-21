@@ -301,6 +301,7 @@ fn test_all() {
     test_threats();
     test_castle();
     test_check();
+    test_score();
     println!("OK");
 }
 
@@ -389,6 +390,23 @@ fn test_check() {
     board.squares[6 * 8 + 1] = Square::Occupied(Piece(Color::Black, Kind::Rook));
 
     assert_eq!(2, next_boards(&board, Color::Black).len());
+}
+
+fn test_score() {
+    let mut board = Board::create_empty();
+    assert_eq!(0, score_board(&board));
+
+    board.setup();
+    assert_eq!(0, score_board(&board));
+
+    board.squares[0] = Square::Empty;
+    assert_eq!(true, score_board(&board) < 0);
+
+    board.squares[7 * 8] = Square::Empty;
+    assert_eq!(0, score_board(&board));
+
+    board.squares[6 * 8] = Square::Empty;
+    assert_eq!(true, score_board(&board) > 0);
 }
 
 fn next_boards(board: &Board, color: Color) -> Vec<Board> {
@@ -689,4 +707,29 @@ fn is_checked(board: &Board, color: Color) -> bool {
         return is_threatened_by(board, king_index, color.opposite())
     }
     false
+}
+
+// Assign a score to the board, with a positive score being good for white, a negative score being good for black.
+fn score_board(board: &Board) -> i32 {
+    fn piece_score(piece: Piece) -> i32 {
+        kind_score(piece.1) * (if piece.0 == Color::Black { -1 } else { 1 })
+    }
+    fn kind_score(kind: Kind) -> i32 {
+        match kind {
+            Kind::Pawn => 1,
+            Kind::Knight => 3,
+            Kind::Bishop => 3,
+            Kind::Rook => 5,
+            Kind::Queen => 9,
+            Kind::King => 0
+        }
+    }
+
+    // Just sum the pieces score.
+    let pieces_score = board.squares.iter().map(|square| match square {
+        Square::Occupied(piece) => piece_score(*piece),
+        _ => 0
+    }).sum();
+
+    pieces_score
 }
