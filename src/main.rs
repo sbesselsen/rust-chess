@@ -55,6 +55,10 @@ impl Square {
     fn is_empty(&self) -> bool {
         matches!(self, Square::Empty)
     }
+
+    fn is_occupied_by(&self, piece: Piece) -> bool {
+        matches!(self, Square::Occupied(my_piece) if piece == *my_piece)
+    }
 }
 
 impl fmt::Display for Square {
@@ -288,7 +292,14 @@ impl fmt::Display for Board {
 }
 
 fn main() {
+    test_all();
+}
+
+fn test_all() {
     test_en_passant();
+    test_threats();
+    test_castle();
+    println!("OK");
 }
 
 fn test_en_passant() {
@@ -296,16 +307,64 @@ fn test_en_passant() {
     board.squares[1 * 8] = Square::Occupied(Piece(Color::White, Kind::Pawn));
     board.squares[3 * 8 + 1] = Square::Occupied(Piece(Color::Black, Kind::Pawn));
 
-    let boards_list = vec![board];
-    println!("Start: \n{}", board);
+    assert_eq!(true, next_boards(&board, Color::White).into_iter().flat_map(|next_board| next_boards(&next_board, Color::Black))
+        .filter(|board| board.squares[2 * 8].is_occupied_by(Piece(Color::Black, Kind::Pawn)))
+        .any(|_| true));
+}
 
-    let boards_list = next_boards(&board, Color::White);
-    for next_board in &boards_list {
-        let boards_list = next_boards(next_board, Color::Black);
-        for next_board in boards_list {
-            println!("{}", next_board);
-        }
-    }
+fn test_threats() {
+    let mut board = Board::create_empty();
+
+    // Check pawns.
+    board.squares[8] = Square::Occupied(Piece(Color::White, Kind::Pawn));
+    assert_eq!(true, is_threatened_by(&board, 17, Color::White));
+    board.squares[5 * 8 + 5] = Square::Occupied(Piece(Color::Black, Kind::Pawn));
+    assert_eq!(true, is_threatened_by(&board, 4 * 8 + 6, Color::Black));
+    assert_eq!(false, is_threatened_by(&board, 4 * 8 + 6, Color::White));
+
+    // Check bishops and queens.
+    let mut board = Board::create_empty();
+    board.squares[0] = Square::Occupied(Piece(Color::White, Kind::Bishop));
+    assert_eq!(true, is_threatened_by(&board, 4 * 8 + 4, Color::White));
+    assert_eq!(false, is_threatened_by(&board, 4 * 8 + 5, Color::White));
+    board.squares[2 * 8 + 2] = Square::Occupied(Piece(Color::White, Kind::Pawn));
+    assert_eq!(false, is_threatened_by(&board, 4 * 8 + 4, Color::White));
+}
+
+fn test_castle() {
+    // White king's castle.
+    let mut board = Board::create_empty();
+    board.white_can_king_castle = true;
+    board.squares[4] = Square::Occupied(Piece(Color::White, Kind::King));
+    board.squares[7] = Square::Occupied(Piece(Color::White, Kind::Rook));
+    assert_eq!(true, next_boards(&board, Color::White).into_iter()
+        .filter(|board| board.squares[6].is_occupied_by(Piece(Color::White, Kind::King)))
+        .filter(|board| board.squares[5].is_occupied_by(Piece(Color::White, Kind::Rook)))
+        .filter(|board| !board.white_can_king_castle)
+        .filter(|board| !board.white_can_queen_castle)
+        .any(|_| true));
+
+    // But not if threatened.
+    board.squares[7 * 8 + 6] = Square::Occupied(Piece(Color::Black, Kind::Rook));
+    assert_eq!(false, next_boards(&board, Color::White).into_iter()
+        .filter(|board| board.squares[6].is_occupied_by(Piece(Color::White, Kind::King)))
+        .filter(|board| board.squares[5].is_occupied_by(Piece(Color::White, Kind::Rook)))
+        .filter(|board| !board.white_can_king_castle)
+        .filter(|board| !board.white_can_queen_castle)
+        .any(|_| true));
+
+    // Black queen's castle.
+    let mut board = Board::create_empty();
+    board.black_can_queen_castle = true;
+    board.squares[7 * 8 + 4] = Square::Occupied(Piece(Color::Black, Kind::King));
+    board.squares[7 * 8] = Square::Occupied(Piece(Color::Black, Kind::Rook));
+
+    assert_eq!(true, next_boards(&board, Color::Black).into_iter()
+        .filter(|board| board.squares[7 * 8 + 2].is_occupied_by(Piece(Color::Black, Kind::King)))
+        .filter(|board| board.squares[7 * 8 + 3].is_occupied_by(Piece(Color::Black, Kind::Rook)))
+        .filter(|board| !board.black_can_king_castle)
+        .filter(|board| !board.black_can_queen_castle)
+        .any(|_| true));
 }
 
 fn next_boards(board: &Board, color: Color) -> Vec<Board> {
@@ -536,5 +595,66 @@ fn index_board_offset_iterate(index: usize, rank_offset: i8, file_offset: i8) ->
 }
 
 fn is_threatened_by(board: &Board, index: usize, color: Color) -> bool {
-    false // TODO TODO TODO
+    // Check for threat by kings.
+    for (rank_offset, file_offset) in &KING_OFFSETS {
+        if let Some(threat_index) = index_board_offset(index, *rank_offset, *file_offset) {
+            if board.squares[threat_index].is_occupied_by(Piece(color, Kind::King)) {
+                // Threatened by a king.
+                return true
+            }
+        }
+    }
+
+    // Check for threats on the diagonals.
+    for (rank_offset, file_offset) in &BISHOP_OFFSETS {
+        for threat_index in index_board_offset_iterate(index, *rank_offset, *file_offset).into_iter() {
+            let square = board.squares[threat_index];
+            if square.is_occupied_by(Piece(color, Kind::Bishop)) || square.is_occupied_by(Piece(color, Kind::Queen)) {
+                // Threatened on the diagonal.
+                return true
+            }
+            if !square.is_empty() {
+                // Blocked from here on out. Stop checking.
+                break
+            }
+        }
+    }
+
+    // Check for threats on the rank and file.
+    for (rank_offset, file_offset) in &ROOK_OFFSETS {
+        for threat_index in index_board_offset_iterate(index, *rank_offset, *file_offset).into_iter() {
+            let square = board.squares[threat_index];
+            if square.is_occupied_by(Piece(color, Kind::Rook)) || square.is_occupied_by(Piece(color, Kind::Queen)) {
+                // Threatened on the diagonal.
+                return true
+            }
+            if !square.is_empty() {
+                // Blocked from here on out. Stop checking.
+                break
+            }
+        }
+    }
+
+    // Check for threats from knights.
+    for (rank_offset, file_offset) in &KNIGHT_OFFSETS {
+        if let Some(threat_index) = index_board_offset(index, *rank_offset, *file_offset) {
+            if board.squares[threat_index].is_occupied_by(Piece(color, Kind::Knight)) {
+                // Threatened on the diagonal.
+                return true
+            }
+        }
+    }
+
+    // Check for threats from pawns.
+    let rank_offset = if color == Color::White { -1 } else { 1 };
+    for file_offset in &[1, -1] {
+        if let Some(threat_index) = index_board_offset(index, rank_offset, *file_offset) {
+            if board.squares[threat_index].is_occupied_by(Piece(color, Kind::Pawn)) {
+                // Threatened by a pawn.
+                return true
+            }
+        }
+    }
+
+    false
 }
