@@ -296,10 +296,18 @@ fn main() {
 }
 
 fn test_all() {
+    test_opening_moves();
     test_en_passant();
     test_threats();
     test_castle();
+    test_check();
     println!("OK");
+}
+
+fn test_opening_moves() {
+    let mut board = Board::create_empty();
+    board.setup();
+    assert_eq!(20, next_boards(&board, Color::White).len());
 }
 
 fn test_en_passant() {
@@ -367,6 +375,22 @@ fn test_castle() {
         .any(|_| true));
 }
 
+fn test_check() {
+    // Test that we cannot move the king into check.
+    let mut board = Board::create_empty();
+    board.squares[3 * 8 + 4] = Square::Occupied(Piece(Color::Black, Kind::King));
+    board.squares[7 * 8 + 3] = Square::Occupied(Piece(Color::White, Kind::Rook));
+    board.squares[5] = Square::Occupied(Piece(Color::White, Kind::Rook));
+
+    assert_eq!(2, next_boards(&board, Color::Black).len());
+
+    // Test that we cannot expose the king to check by moving another piece.
+    board.squares[7 * 8] = Square::Occupied(Piece(Color::White, Kind::Bishop));
+    board.squares[6 * 8 + 1] = Square::Occupied(Piece(Color::Black, Kind::Rook));
+
+    assert_eq!(2, next_boards(&board, Color::Black).len());
+}
+
 fn next_boards(board: &Board, color: Color) -> Vec<Board> {
     let mut boards: Vec<Board> = vec![];
     for (index, square) in board.squares.iter().enumerate() {
@@ -392,8 +416,9 @@ fn next_boards(board: &Board, color: Color) -> Vec<Board> {
             _ => {}
         }
     }
-    // TODO: filter the moves based on check.
-    boards
+
+    // Return the boards which are acceptable (not in check).
+    boards.into_iter().filter(|board| !is_checked(board, color)).collect()
 }
 
 const ROOK_OFFSETS: [(i8, i8); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
@@ -656,5 +681,12 @@ fn is_threatened_by(board: &Board, index: usize, color: Color) -> bool {
         }
     }
 
+    false
+}
+
+fn is_checked(board: &Board, color: Color) -> bool {
+    if let Some((king_index, _)) = board.squares.iter().enumerate().find(|(_, square)| square.is_occupied_by(Piece(color, Kind::King))) {
+        return is_threatened_by(board, king_index, color.opposite())
+    }
     false
 }
