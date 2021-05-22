@@ -1,13 +1,13 @@
 mod board;
 mod color;
+mod coordinates;
 mod kind;
 mod piece;
-mod position;
 mod square;
 
 pub use board::{ Board, CastlingSide };
 pub use color::{ Color };
+pub use coordinates::{ Coordinates };
 pub use kind::{ Kind };
 pub use piece::{ Piece };
-pub use position::{ Position };
 pub use square::{ Square };

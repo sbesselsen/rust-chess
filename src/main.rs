@@ -1,6 +1,6 @@
 mod board;
 
-use board::{ Board, CastlingSide, Color, Kind, Piece, Position, Square };
+use board::{ Board, CastlingSide, Color, Coordinates, Kind, Piece, Square };
 
 fn main() {
     test_all();
@@ -280,7 +280,7 @@ fn add_kings_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
 }
 
 fn add_pawn_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Board>) {
-    if let Some(position) = Position::new_from_index(index) {
+    if let Some(coordinates) = Coordinates::new_from_index(index) {
         let move_direction: i8 = match color {
             Color::White => 1,
             _ => -1
@@ -294,7 +294,7 @@ fn add_pawn_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Bo
                 // Forward 1.
                 boards.push(board.clone_move_piece(index, one_forward_index));
 
-                if position.rank == start_rank {
+                if coordinates.rank == start_rank {
                     if let Some(two_forward_index) = index_board_offset(index, 2 * move_direction, 0) {
                         if let Square::Empty = board.get_square(two_forward_index) {
                             // Forward 2.
@@ -324,9 +324,9 @@ fn add_pawn_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Bo
 }
 
 fn index_board_offset(index: usize, rank_offset: i8, file_offset: i8) -> Option<usize> {
-    if let Some(position) = Position::new_from_index(index) {
-        if let Some(target_position) = position.offset(rank_offset, file_offset) {
-            return Some(target_position.index())
+    if let Some(coordinates) = Coordinates::new_from_index(index) {
+        if let Some(target_coordinates) = coordinates.offset(rank_offset, file_offset) {
+            return Some(target_coordinates.index())
         }
     }
     None
@@ -335,10 +335,10 @@ fn index_board_offset(index: usize, rank_offset: i8, file_offset: i8) -> Option<
 // Iterate indexes with the same offset until we hit the edge of the board or a piece we can capture.
 fn index_board_offset_iterate(index: usize, rank_offset: i8, file_offset: i8) -> Vec<usize> {
     let mut indices = vec![];
-    if let Some(position) = Position::new_from_index(index) {
+    if let Some(coordinates) = Coordinates::new_from_index(index) {
         for multiple in 1.. {
-            if let Some(target_position) = position.offset(rank_offset * multiple, file_offset * multiple) {
-                let target_index = target_position.index();
+            if let Some(target_coordinates) = coordinates.offset(rank_offset * multiple, file_offset * multiple) {
+                let target_index = target_coordinates.index();
                 indices.push(target_index);
             } else {
                 break
