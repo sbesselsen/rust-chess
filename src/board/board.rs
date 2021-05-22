@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{ Color, Kind, Piece, Square };
+use super::{ Color, Coordinates, Kind, Piece, Square };
 
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub struct Board {
@@ -64,7 +64,10 @@ impl Board {
         }
     }
 
-    pub fn move_piece(&mut self, index: usize, target_index: usize) {
+    pub fn move_piece(&mut self, from: Coordinates, to: Coordinates) {
+        let index = from.index();
+        let target_index = to.index();
+
         // Match on what's on the target square before the move, to process captures.
         match self.squares[target_index] {
             Square::Occupied(Piece(Color::White, Kind::Rook)) if target_index == 0 => {
@@ -149,22 +152,26 @@ impl Board {
         }
     }
 
-    pub fn clone_move_piece(&self, index: usize, target_index: usize) -> Board {
+    pub fn clone_move_piece(&self, from: Coordinates, to: Coordinates) -> Board {
         let mut clone = self.clone();
-        clone.move_piece(index, target_index);
+        clone.move_piece(from, to);
         clone
     }
 
-    pub fn get_square(&self, index: usize) -> Square {
-        self.squares[index]
+    pub fn get_square(&self, coordinates: Coordinates) -> Square {
+        self.squares[coordinates.index()]
     }
 
-    pub fn set_square(&mut self, index: usize, value: Square) {
-        self.squares[index] = value
+    pub fn set_square(&mut self, coordinates: Coordinates, value: Square) {
+        self.squares[coordinates.index()] = value
     }
 
     pub fn squares(&self) -> &[Square] {
         &self.squares
+    }
+
+    pub fn squares_coordinates_iter(&self) -> impl Iterator<Item=(Coordinates, &Square)> + '_ {
+        self.squares().iter().enumerate().map(|(index, square)| (Coordinates::new_from_index(index).unwrap(), square))
     }
 
     pub fn set_castling_allowed(&mut self, color: Color, side: CastlingSide, allowed: bool) {

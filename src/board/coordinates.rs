@@ -35,6 +35,26 @@ impl Coordinates {
         Coordinates::new_signed(self.rank as i8 + rank, self.file as i8 + file)
     }
 
+    pub fn offsets_repeated(&self, rank_offset: i8, file_offset: i8) -> Vec<Coordinates> {
+        let mut iterated_coords = vec![];
+        for multiple in 1.. {
+            if let Some(target_coordinates) = self.offset(rank_offset * multiple, file_offset * multiple) {
+                iterated_coords.push(target_coordinates);
+            } else {
+                break
+            }
+        }
+        iterated_coords
+    }
+
+    pub fn rank(&self) -> u8 {
+        self.rank
+    }
+
+    pub fn file(&self) -> u8 {
+        self.file
+    }
+
     pub fn index(&self) -> usize {
         self.index
     }
