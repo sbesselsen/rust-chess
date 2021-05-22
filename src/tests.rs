@@ -2,14 +2,13 @@ use crate::board::{ Board, CastlingSide, Color, Coordinates, Kind, Piece, Square
 use crate::engine::{ is_threatened_by, next_boards, score_board };
 
 pub fn test_all() {
-    for _ in 0..10000 {
-        test_opening_moves();
-        test_en_passant();
-        test_threats();
-        test_castle();
-        test_check();
-        test_score();
-    }
+    test_board_parser();
+    test_opening_moves();
+    test_en_passant();
+    test_threats();
+    test_castle();
+    test_check();
+    test_score();
     test_display_board();
     println!("OK");
 }
@@ -122,4 +121,22 @@ fn test_score() {
 
     board.set_square(Coordinates::new(6, 0).unwrap(), Square::Empty);
     assert_eq!(true, score_board(&board) > 0);
+}
+
+fn test_board_parser() {
+    let board_data = "
+  +-v-------------v-+
+8 | ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ |
+7 | ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ |
+6 |                 |
+5 |                 |
+4 |                 |
+3 |                 |
+2 | ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙ |
+1 | ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖ |
+  +-v-------------v-+
+    a b c d e f g h";
+
+    let board = Board::new_from_str(board_data).unwrap();
+    println!("{}", board);
 }

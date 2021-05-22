@@ -1,6 +1,7 @@
 use std::fmt;
 
 use crate::board::{ Color, Coordinates, Kind, Piece, Square };
+use crate::board::parser::{ parse_board };
 
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub struct Board {
@@ -27,6 +28,10 @@ impl Board {
             black_can_king_castle: false,
             black_can_queen_castle: false,
         }
+    }
+
+    pub fn new_from_str(input: &str) -> Result<Board, String> {
+        parse_board(input)
     }
 
     pub fn setup(&mut self) {

@@ -2,6 +2,7 @@ mod board;
 mod color;
 mod coordinates;
 mod kind;
+mod parser;
 mod piece;
 mod square;
 
