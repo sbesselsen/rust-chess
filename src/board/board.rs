@@ -5,7 +5,7 @@ use super::{ Color, Coordinates, Kind, Piece, Square };
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub struct Board {
     squares: [Square; 64],
-    pub en_passant_capturable: Option<usize>,
+    en_passant_capturable: Option<usize>,
     white_can_king_castle: bool,
     white_can_queen_castle: bool,
     black_can_king_castle: bool,
@@ -198,6 +198,10 @@ impl Board {
             (Color::Black, CastlingSide::King) => self.black_can_king_castle,
             (Color::Black, CastlingSide::Queen) => self.black_can_queen_castle,
         }
+    }
+
+    pub fn is_en_passant_capturable(&self, coordinates: Coordinates) -> bool {
+        matches!(self.en_passant_capturable, Some(index) if index == coordinates.index())
     }
 }
 

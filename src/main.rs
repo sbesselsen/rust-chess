@@ -315,11 +315,8 @@ fn add_pawn_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
                 }
             }
 
-            // TODO: make en_passant_capturable private
-            if let Some(en_passant_index) = board.en_passant_capturable {
-                if to.index() == en_passant_index {
-                    boards.push(board.clone_move_piece(from, to));
-                }
+            if board.is_en_passant_capturable(to) {
+                boards.push(board.clone_move_piece(from, to));
             }
         }
     }
