@@ -414,29 +414,29 @@ fn next_boards(board: &Board, color: Color) -> Vec<Board> {
     for (index, square) in board.squares.iter().enumerate() {
         match *square {
             Square::Occupied(Piece(piece_color, Kind::Rook)) if piece_color == color => {
-                add_rook_moves(board, index, color, &mut boards)
+                add_rook_moves(&board, index, color, &mut boards)
             },
             Square::Occupied(Piece(piece_color, Kind::Knight)) if piece_color == color => {
-                add_knight_moves(board, index, color, &mut boards)
+                add_knight_moves(&board, index, color, &mut boards)
             },
             Square::Occupied(Piece(piece_color, Kind::Bishop)) if piece_color == color => {
-                add_bishop_moves(board, index, color, &mut boards)
+                add_bishop_moves(&board, index, color, &mut boards)
             },
             Square::Occupied(Piece(piece_color, Kind::Queen)) if piece_color == color => {
-                add_queen_moves(board, index, color, &mut boards)
+                add_queen_moves(&board, index, color, &mut boards)
             },
             Square::Occupied(Piece(piece_color, Kind::King)) if piece_color == color => {
-                add_king_moves(board, index, color, &mut boards)
+                add_king_moves(&board, index, color, &mut boards)
             },
             Square::Occupied(Piece(piece_color, Kind::Pawn)) if piece_color == color => {
-                add_pawn_moves(board, index, color, &mut boards)
+                add_pawn_moves(&board, index, color, &mut boards)
             },
             _ => {}
         }
     }
 
     // Return the boards which are acceptable (not in check).
-    boards.into_iter().filter(|board| !is_checked(board, color)).collect()
+    boards.into_iter().filter(|board| !is_checked(&board, color)).collect()
 }
 
 const ROOK_OFFSETS: [(i8, i8); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
@@ -503,8 +503,8 @@ fn add_bishop_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<
 }
 
 fn add_queen_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Board>) {
-    add_rook_moves(board, index, color, boards);
-    add_bishop_moves(board, index, color, boards);
+    add_rook_moves(&board, index, color, boards);
+    add_bishop_moves(&board, index, color, boards);
 }
 
 const KING_OFFSETS: [(i8, i8); 8] = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)];
@@ -525,17 +525,17 @@ fn add_king_moves(board: &Board, index: usize, color: Color, boards: &mut Vec<Bo
     // Castling.
     if color == Color::White {
         if board.white_can_queen_castle {
-            add_queens_castle_move(board, color, boards);
+            add_queens_castle_move(&board, color, boards);
         }
         if board.white_can_king_castle {
-            add_kings_castle_move(board, color, boards);
+            add_kings_castle_move(&board, color, boards);
         }
     } else if color == Color::Black {
         if board.black_can_queen_castle {
-            add_queens_castle_move(board, color, boards);
+            add_queens_castle_move(&board, color, boards);
         }
         if board.black_can_king_castle {
-            add_kings_castle_move(board, color, boards);
+            add_kings_castle_move(&board, color, boards);
         }
     }
 }
@@ -546,9 +546,9 @@ fn add_queens_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) 
     if board.squares[index_offset + 1].is_empty()
             && board.squares[index_offset + 2].is_empty()
             && board.squares[index_offset + 3].is_empty()
-            && !is_threatened_by(board, index_offset + 1, opposite_color)
-            && !is_threatened_by(board, index_offset + 2, opposite_color)
-            && !is_threatened_by(board, index_offset + 3, opposite_color) {
+            && !is_threatened_by(&board, index_offset + 1, opposite_color)
+            && !is_threatened_by(&board, index_offset + 2, opposite_color)
+            && !is_threatened_by(&board, index_offset + 3, opposite_color) {
         let mut new_board = board.clone_move_piece(index_offset + 4, index_offset + 2);
         new_board.move_piece(index_offset, index_offset + 3);
         boards.push(new_board);
@@ -560,8 +560,8 @@ fn add_kings_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
     let opposite_color = color.opposite();
     if board.squares[index_offset + 5].is_empty()
             && board.squares[index_offset + 6].is_empty()
-            && !is_threatened_by(board, index_offset + 5, opposite_color)
-            && !is_threatened_by(board, index_offset + 6, opposite_color) {
+            && !is_threatened_by(&board, index_offset + 5, opposite_color)
+            && !is_threatened_by(&board, index_offset + 6, opposite_color) {
         let mut new_board = board.clone_move_piece(index_offset + 4, index_offset + 6);
         new_board.move_piece(index_offset + 7, index_offset + 5);
         boards.push(new_board);
@@ -704,7 +704,7 @@ fn is_threatened_by(board: &Board, index: usize, color: Color) -> bool {
 
 fn is_checked(board: &Board, color: Color) -> bool {
     if let Some((king_index, _)) = board.squares.iter().enumerate().find(|(_, square)| square.is_occupied_by(Piece(color, Kind::King))) {
-        return is_threatened_by(board, king_index, color.opposite())
+        return is_threatened_by(&board, king_index, color.opposite())
     }
     false
 }
