@@ -16,7 +16,21 @@ pub fn test_all() {
 fn test_display_board() {
     let mut board = Board::new();
     board.setup();
-    println!("{}", board);
+
+    let board_data = "
+  +-v-------------v-+
+8 | ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ |
+7 | ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ |
+6 |                 |
+5 |                 |
+4 |                 |
+3 |                 |
+2 | ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙ |
+1 | ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖ |
+  +-v-------------v-+
+    a b c d e f g h";
+
+    assert_eq!(String::from(format!("{}", board).trim()), String::from(board_data.trim()));
 }
 
 fn test_opening_moves() {
@@ -127,16 +141,16 @@ fn test_board_parser() {
     let board_data = "
   +-v-------------v-+
 8 | ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜ |
-7 | ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ ♟︎ |
+7 | ♟︎ ♟︎ ♟︎ ♟︎ ♟︎   ♟︎ ♟︎ |
 6 |                 |
-5 |                 |
-4 |                 |
-3 |                 |
-2 | ♙ ♙ ♙ ♙ ♙ ♙ ♙ ♙ |
+5 |     ♕           |
+4 |             ♙   |
+3 |             *   |
+2 | ♙ ♙ ♙ ♙ ♙ ♙   ♙ |
 1 | ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖ |
-  +-v-------------v-+
+  +-v---------------+
     a b c d e f g h";
 
-    let board = Board::new_from_str(board_data).unwrap();
-    println!("{}", board);
+    let board = Board::parse_str(board_data);
+    assert_eq!(board.map(|board| String::from(format!("{}", board).trim())), Ok(String::from(board_data.trim())));
 }

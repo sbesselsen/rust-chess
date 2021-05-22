@@ -30,7 +30,7 @@ impl Board {
         }
     }
 
-    pub fn new_from_str(input: &str) -> Result<Board, String> {
+    pub fn parse_str(input: &str) -> Result<Board, String> {
         parse_board(input)
     }
 
@@ -203,6 +203,10 @@ impl Board {
             (Color::Black, CastlingSide::King) => self.black_can_king_castle,
             (Color::Black, CastlingSide::Queen) => self.black_can_queen_castle,
         }
+    }
+
+    pub fn set_en_passant_capturable(&mut self, coordinates: Option<Coordinates>) {
+        self.en_passant_capturable = coordinates.map(|c| c.index());
     }
 
     pub fn is_en_passant_capturable(&self, coordinates: Coordinates) -> bool {
