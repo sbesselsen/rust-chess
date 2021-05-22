@@ -1,7 +1,6 @@
 use std::fmt;
 
-use super::Color;
-use super::Kind;
+use crate::board::{ Color, Kind };
 
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub struct Piece(pub Color, pub Kind);

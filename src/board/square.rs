@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::Piece;
+use crate::board::{ Piece };
 
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub enum Square {

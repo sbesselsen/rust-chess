@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{ Color, Coordinates, Kind, Piece, Square };
+use crate::board::{ Color, Coordinates, Kind, Piece, Square };
 
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub struct Board {
