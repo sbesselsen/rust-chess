@@ -59,7 +59,7 @@ fn parse_line(board: &mut Board, rank: u8, line: &str) -> Result<(), String> {
     let (remainder, _) = expect_prefixes(remainder, &[&format!("{}", rank + 1)])?;
     let (mut remainder, _) = expect_prefixes(remainder, &LINE_PREFIXES)?;
     for file in 0..8 {
-        let coordinates = Coordinates::new(rank, file).unwrap();
+        let coordinates = Coordinates::new_unsigned(rank, file).unwrap();
 
         let (loop_remainder, _) = expect_prefixes(remainder, &LINE_COLSEPS)?;
         let (loop_remainder, piece) = expect_prefixes(loop_remainder, &LINE_PIECES)?;

@@ -127,14 +127,14 @@ fn add_queens_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) 
     let rank: u8 = if color == Color::White { 0 } else { 7 };
 
     let opposite_color = color.opposite();
-    if board.get_square(Coordinates::new(rank, 1).unwrap()).is_empty()
-            && board.get_square(Coordinates::new(rank, 2).unwrap()).is_empty()
-            && board.get_square(Coordinates::new(rank, 3).unwrap()).is_empty()
-            && !is_threatened_by(&board, Coordinates::new(rank, 1).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new(rank, 2).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new(rank, 3).unwrap(), opposite_color) {
-        let mut new_board = board.clone_move_piece(Coordinates::new(rank, 4).unwrap(), Coordinates::new(rank, 2).unwrap());
-        new_board.move_piece(Coordinates::new(rank, 0).unwrap(), Coordinates::new(rank, 3).unwrap());
+    if board.get_square(Coordinates::new_unsigned(rank, 1).unwrap()).is_empty()
+            && board.get_square(Coordinates::new_unsigned(rank, 2).unwrap()).is_empty()
+            && board.get_square(Coordinates::new_unsigned(rank, 3).unwrap()).is_empty()
+            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 1).unwrap(), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 2).unwrap(), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 3).unwrap(), opposite_color) {
+        let mut new_board = board.clone_move_piece(Coordinates::new_unsigned(rank, 4).unwrap(), Coordinates::new_unsigned(rank, 2).unwrap());
+        new_board.move_piece(Coordinates::new_unsigned(rank, 0).unwrap(), Coordinates::new_unsigned(rank, 3).unwrap());
         boards.push(new_board);
     }
 }
@@ -143,12 +143,12 @@ fn add_kings_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
     let rank: u8 = if color == Color::White { 0 } else { 7 };
 
     let opposite_color = color.opposite();
-    if board.get_square(Coordinates::new(rank, 5).unwrap()).is_empty()
-            && board.get_square(Coordinates::new(rank, 6).unwrap()).is_empty()
-            && !is_threatened_by(&board, Coordinates::new(rank, 5).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new(rank, 6).unwrap(), opposite_color) {
-        let mut new_board = board.clone_move_piece(Coordinates::new(rank, 4).unwrap(), Coordinates::new(rank, 6).unwrap());
-        new_board.move_piece(Coordinates::new(rank, 7).unwrap(), Coordinates::new(rank, 5).unwrap());
+    if board.get_square(Coordinates::new_unsigned(rank, 5).unwrap()).is_empty()
+            && board.get_square(Coordinates::new_unsigned(rank, 6).unwrap()).is_empty()
+            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 5).unwrap(), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 6).unwrap(), opposite_color) {
+        let mut new_board = board.clone_move_piece(Coordinates::new_unsigned(rank, 4).unwrap(), Coordinates::new_unsigned(rank, 6).unwrap());
+        new_board.move_piece(Coordinates::new_unsigned(rank, 7).unwrap(), Coordinates::new_unsigned(rank, 5).unwrap());
         boards.push(new_board);
     }
 }

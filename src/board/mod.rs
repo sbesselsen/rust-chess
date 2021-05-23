@@ -8,7 +8,7 @@ mod square;
 
 pub use board::{ Board, CastlingSide };
 pub use color::{ Color };
-pub use coordinates::{ Coordinates };
+pub use coordinates::{ Coordinates, File, Rank };
 pub use kind::{ Kind };
 pub use piece::{ Piece };
 pub use square::{ Square };

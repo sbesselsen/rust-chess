@@ -7,6 +7,30 @@ pub struct Coordinates {
     index: usize
 }
 
+#[allow(dead_code)]
+pub enum Rank {
+    R1 = 0,
+    R2 = 1,
+    R3 = 2,
+    R4 = 3,
+    R5 = 4,
+    R6 = 5,
+    R7 = 6,
+    R8 = 7
+}
+
+#[allow(dead_code)]
+pub enum File {
+    A = 0,
+    B = 1,
+    C = 2,
+    D = 3,
+    E = 4,
+    F = 5,
+    G = 6,
+    H = 7
+}
+
 impl Coordinates {
     pub fn new_from_index(index: usize) -> Option<Coordinates> {
         match index {
@@ -20,7 +44,11 @@ impl Coordinates {
         }
     }
 
-    pub fn new(rank: u8, file: u8) -> Option<Coordinates>  {
+    pub fn new(file: File, rank: Rank) -> Coordinates {
+        Coordinates::new_signed(rank as i8, file as i8).unwrap()
+    }
+
+    pub fn new_unsigned(rank: u8, file: u8) -> Option<Coordinates>  {
         Coordinates::new_signed(rank as i8, file as i8)
     }
 
