@@ -1,6 +1,5 @@
 use std::fmt;
 
-#[allow(dead_code)]
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub enum Rank {
     R1 = 0,
@@ -13,19 +12,11 @@ pub enum Rank {
     R8 = 7
 }
 
+const ALL_RANKS: [Rank; 8] = [Rank::R1, Rank::R2, Rank::R3, Rank::R4, Rank::R5, Rank::R6, Rank::R7, Rank::R8];
+
 impl Rank {
     pub fn new_from_index(index: u8) -> Option<Rank> {
-        match index {
-            0 => Some(Rank::R1),
-            1 => Some(Rank::R2),
-            2 => Some(Rank::R3),
-            3 => Some(Rank::R4),
-            4 => Some(Rank::R5),
-            5 => Some(Rank::R6),
-            6 => Some(Rank::R7),
-            7 => Some(Rank::R8),
-            _ => None
-        }
+        if index > 7 { None } else { Some(ALL_RANKS[index as usize]) }
     }
 
     pub fn index(&self) -> u8 {
@@ -40,7 +31,6 @@ impl fmt::Display for Rank {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub enum File {
     A = 0,
@@ -53,19 +43,11 @@ pub enum File {
     H = 7
 }
 
+const ALL_FILES: [File; 8] = [File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H];
+
 impl File {
     pub fn new_from_index(index: u8) -> Option<File> {
-        match index {
-            0 => Some(File::A),
-            1 => Some(File::B),
-            2 => Some(File::C),
-            3 => Some(File::D),
-            4 => Some(File::E),
-            5 => Some(File::F),
-            6 => Some(File::G),
-            7 => Some(File::H),
-            _ => None
-        }
+        if index > 7 { None } else { Some(ALL_FILES[index as usize]) }
     }
 
     pub fn index(&self) -> u8 {
@@ -136,6 +118,7 @@ impl Coordinates {
         self.rank
     }
 
+    #[allow(dead_code)]
     pub fn file(&self) -> File {
         self.file
     }
