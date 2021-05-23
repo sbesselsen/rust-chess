@@ -1,13 +1,7 @@
 use std::fmt;
 
-#[derive(Debug,Copy,PartialEq,Clone,Hash)]
-pub struct Coordinates {
-    pub rank: u8,
-    pub file: u8,
-    index: usize
-}
-
 #[allow(dead_code)]
+#[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub enum Rank {
     R1 = 0,
     R2 = 1,
@@ -19,7 +13,35 @@ pub enum Rank {
     R8 = 7
 }
 
+impl Rank {
+    pub fn new_from_index(index: u8) -> Option<Rank> {
+        match index {
+            0 => Some(Rank::R1),
+            1 => Some(Rank::R2),
+            2 => Some(Rank::R3),
+            3 => Some(Rank::R4),
+            4 => Some(Rank::R5),
+            5 => Some(Rank::R6),
+            6 => Some(Rank::R7),
+            7 => Some(Rank::R8),
+            _ => None
+        }
+    }
+
+    pub fn index(&self) -> u8 {
+        *self as u8
+    }
+}
+
+impl fmt::Display for Rank {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.index() + 1)
+    }
+}
+
 #[allow(dead_code)]
+#[derive(Debug,Copy,PartialEq,Clone,Hash)]
 pub enum File {
     A = 0,
     B = 1,
@@ -31,13 +53,50 @@ pub enum File {
     H = 7
 }
 
+impl File {
+    pub fn new_from_index(index: u8) -> Option<File> {
+        match index {
+            0 => Some(File::A),
+            1 => Some(File::B),
+            2 => Some(File::C),
+            3 => Some(File::D),
+            4 => Some(File::E),
+            5 => Some(File::F),
+            6 => Some(File::G),
+            7 => Some(File::H),
+            _ => None
+        }
+    }
+
+    pub fn index(&self) -> u8 {
+        *self as u8
+    }
+}
+
+const FILE_LETTERS: [&str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+impl fmt::Display for File {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", FILE_LETTERS[self.index() as usize])
+    }
+}
+
+#[derive(Debug,Copy,PartialEq,Clone,Hash)]
+pub struct Coordinates {
+    pub file: File,
+    pub rank: Rank,
+    index: usize
+}
+
 impl Coordinates {
     pub fn new_from_index(index: usize) -> Option<Coordinates> {
         match index {
             0..=63 => {
                 let index_u8 = index as u8;
-                let file: u8 = index_u8 % 8;
-                let rank: u8 = (index_u8 - file) / 8;
+                let file_u8 = index_u8 % 8;
+                let file: File = File::new_from_index(file_u8).unwrap();
+                let rank: Rank = Rank::new_from_index((index_u8 - file_u8) / 8).unwrap();
                 Some(Coordinates { rank, file, index })
             },
             _ => None
@@ -45,28 +104,26 @@ impl Coordinates {
     }
 
     pub fn new(file: File, rank: Rank) -> Coordinates {
-        Coordinates::new_signed(rank as i8, file as i8).unwrap()
+        return Coordinates { rank, file, index: calculate_index(file.index(), rank.index()) }
     }
 
-    pub fn new_unsigned(rank: u8, file: u8) -> Option<Coordinates>  {
-        Coordinates::new_signed(rank as i8, file as i8)
-    }
-
-    fn new_signed(rank: i8, file: i8) -> Option<Coordinates>  {
-        match (rank, file) {
-            (0..=7, 0..=7) => Some(Coordinates { rank: rank as u8, file: file as u8, index: calculate_index(rank as u8, file as u8) }),
-            _ => None
+    pub fn offset(&self, file_offset: i8, rank_offset: i8) -> Option<Coordinates> {
+        let new_file = self.file as i8 + file_offset;
+        let new_rank = self.rank as i8 + rank_offset;
+        if new_file >= 0 && new_rank >= 0 {
+            if let Some(file) = File::new_from_index(new_file as u8) {
+                if let Some(rank) = Rank::new_from_index(new_rank as u8) {
+                    return Some(Coordinates::new(file, rank))
+                }
+            }
         }
+        None
     }
 
-    pub fn offset(&self, rank: i8, file: i8) -> Option<Coordinates> {
-        Coordinates::new_signed(self.rank as i8 + rank, self.file as i8 + file)
-    }
-
-    pub fn offsets_repeated(&self, rank_offset: i8, file_offset: i8) -> Vec<Coordinates> {
+    pub fn offsets_repeated(&self, file_offset: i8, rank_offset: i8) -> Vec<Coordinates> {
         let mut iterated_coords = vec![];
         for multiple in 1.. {
-            if let Some(target_coordinates) = self.offset(rank_offset * multiple, file_offset * multiple) {
+            if let Some(target_coordinates) = self.offset(file_offset * multiple, rank_offset * multiple) {
                 iterated_coords.push(target_coordinates);
             } else {
                 break
@@ -75,11 +132,11 @@ impl Coordinates {
         iterated_coords
     }
 
-    pub fn rank(&self) -> u8 {
+    pub fn rank(&self) -> Rank {
         self.rank
     }
 
-    pub fn file(&self) -> u8 {
+    pub fn file(&self) -> File {
         self.file
     }
 
@@ -88,15 +145,13 @@ impl Coordinates {
     }
 }
 
-fn calculate_index(rank: u8, file: u8) -> usize {
+fn calculate_index(file: u8, rank: u8) -> usize {
     (rank as usize) * 8 + (file as usize)
 }
-
-const FILE_LETTERS: [&str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 impl fmt::Display for Coordinates {
     // This trait requires `fmt` with this exact signature.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", FILE_LETTERS[self.file as usize], self.rank + 1)
+        write!(f, "{}{}", self.file, self.rank)
     }
 }

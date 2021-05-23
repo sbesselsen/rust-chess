@@ -1,4 +1,4 @@
-use crate::board::{ Board, CastlingSide, Color, Coordinates, Kind, Piece, Square };
+use crate::board::{ Board, CastlingSide, Color, Coordinates, File, Kind, Piece, Rank, Square };
 use crate::engine::analysis::{ is_checked, is_threatened_by };
 
 pub fn next_boards(board: &Board, color: Color) -> Vec<Board> {
@@ -35,7 +35,7 @@ pub const ROOK_OFFSETS: [(i8, i8); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
 fn add_rook_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     for (rank_offset, file_offset) in &ROOK_OFFSETS {
-        for to in from.offsets_repeated(*rank_offset, *file_offset).into_iter() {
+        for to in from.offsets_repeated(*file_offset, *rank_offset).into_iter() {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) => {
                     if piece_color == color {
@@ -59,7 +59,7 @@ pub const KNIGHT_OFFSETS: [(i8, i8); 8] = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
 
 fn add_knight_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     for (rank_offset, file_offset) in &KNIGHT_OFFSETS {
-        if let Some(to) = from.offset(*rank_offset, *file_offset) {
+        if let Some(to) = from.offset(*file_offset, *rank_offset) {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
                 _ => {
@@ -74,7 +74,7 @@ pub const BISHOP_OFFSETS: [(i8, i8); 4] = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
 
 fn add_bishop_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     for (rank_offset, file_offset) in &BISHOP_OFFSETS {
-        for to in from.offsets_repeated(*rank_offset, *file_offset).into_iter() {
+        for to in from.offsets_repeated(*file_offset, *rank_offset).into_iter() {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) => {
                     if piece_color == color {
@@ -104,7 +104,7 @@ pub const KING_OFFSETS: [(i8, i8); 8] = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0
 fn add_king_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     // Normal moves.
     for (rank_offset, file_offset) in &KING_OFFSETS {
-        if let Some(to) = from.offset(*rank_offset, *file_offset) {
+        if let Some(to) = from.offset(*file_offset, *rank_offset) {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
                 _ => {
@@ -124,31 +124,31 @@ fn add_king_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
 }
 
 fn add_queens_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
-    let rank: u8 = if color == Color::White { 0 } else { 7 };
+    let rank: Rank = if color == Color::White { Rank::R1 } else { Rank::R8 };
 
     let opposite_color = color.opposite();
-    if board.get_square(Coordinates::new_unsigned(rank, 1).unwrap()).is_empty()
-            && board.get_square(Coordinates::new_unsigned(rank, 2).unwrap()).is_empty()
-            && board.get_square(Coordinates::new_unsigned(rank, 3).unwrap()).is_empty()
-            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 1).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 2).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 3).unwrap(), opposite_color) {
-        let mut new_board = board.clone_move_piece(Coordinates::new_unsigned(rank, 4).unwrap(), Coordinates::new_unsigned(rank, 2).unwrap());
-        new_board.move_piece(Coordinates::new_unsigned(rank, 0).unwrap(), Coordinates::new_unsigned(rank, 3).unwrap());
+    if board.get_square(Coordinates::new(File::B, rank)).is_empty()
+            && board.get_square(Coordinates::new(File::C, rank)).is_empty()
+            && board.get_square(Coordinates::new(File::D, rank)).is_empty()
+            && !is_threatened_by(&board, Coordinates::new(File::B, rank), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new(File::C, rank), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new(File::D, rank), opposite_color) {
+        let mut new_board = board.clone_move_piece(Coordinates::new(File::E, rank), Coordinates::new(File::C, rank));
+        new_board.move_piece(Coordinates::new(File::A, rank), Coordinates::new(File::D, rank));
         boards.push(new_board);
     }
 }
 
 fn add_kings_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
-    let rank: u8 = if color == Color::White { 0 } else { 7 };
+    let rank: Rank = if color == Color::White { Rank::R1 } else { Rank::R8 };
 
     let opposite_color = color.opposite();
-    if board.get_square(Coordinates::new_unsigned(rank, 5).unwrap()).is_empty()
-            && board.get_square(Coordinates::new_unsigned(rank, 6).unwrap()).is_empty()
-            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 5).unwrap(), opposite_color)
-            && !is_threatened_by(&board, Coordinates::new_unsigned(rank, 6).unwrap(), opposite_color) {
-        let mut new_board = board.clone_move_piece(Coordinates::new_unsigned(rank, 4).unwrap(), Coordinates::new_unsigned(rank, 6).unwrap());
-        new_board.move_piece(Coordinates::new_unsigned(rank, 7).unwrap(), Coordinates::new_unsigned(rank, 5).unwrap());
+    if board.get_square(Coordinates::new(File::F, rank)).is_empty()
+            && board.get_square(Coordinates::new(File::G, rank)).is_empty()
+            && !is_threatened_by(&board, Coordinates::new(File::F, rank), opposite_color)
+            && !is_threatened_by(&board, Coordinates::new(File::G, rank), opposite_color) {
+        let mut new_board = board.clone_move_piece(Coordinates::new(File::E, rank), Coordinates::new(File::G, rank));
+        new_board.move_piece(Coordinates::new(File::H, rank), Coordinates::new(File::F, rank));
         boards.push(new_board);
     }
 }
@@ -162,13 +162,13 @@ fn add_pawn_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
         Color::White => 1,
         _ => 6
     };
-    if let Some(one_forward) = from.offset(1 * move_direction, 0) {
+    if let Some(one_forward) = from.offset(0, 1 * move_direction) {
         if let Square::Empty = board.get_square(one_forward) {
             // Forward 1.
             boards.push(board.clone_move_piece(from, one_forward));
 
-            if from.rank() == start_rank {
-                if let Some(two_forward) = from.offset(2 * move_direction, 0) {
+            if from.rank().index() == start_rank {
+                if let Some(two_forward) = from.offset(0, 2 * move_direction) {
                     if let Square::Empty = board.get_square(two_forward) {
                         // Forward 2.
                         boards.push(board.clone_move_piece(from, two_forward));
@@ -179,7 +179,7 @@ fn add_pawn_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
     }
     let capture_offsets = [(move_direction, -1), (move_direction, 1)];
     for (rank_offset, file_offset) in &capture_offsets {
-        if let Some(to) = from.offset(*rank_offset, *file_offset) {
+        if let Some(to) = from.offset(*file_offset, *rank_offset) {
             if let Square::Occupied(Piece(piece_color, _)) = board.get_square(to) {
                 if piece_color != color {
                     // Can capture this piece.

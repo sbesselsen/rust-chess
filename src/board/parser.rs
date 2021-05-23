@@ -1,4 +1,4 @@
-use crate::board::{ Board, Color, CastlingSide, Coordinates, Kind, Piece, Square };
+use crate::board::{ Board, Color, CastlingSide, Coordinates, File, Kind, Piece, Rank, Square };
 
 pub fn parse_board(input: &str) -> Result<Board, String> {
     let lines: Vec<&str> = input.trim().split("\n").collect();
@@ -11,7 +11,7 @@ pub fn parse_board(input: &str) -> Result<Board, String> {
 
     parse_header(&mut board, lines[0])?;
     for (neg_rank, line) in (&lines[1..=8]).iter().enumerate() {
-        parse_line(&mut board, (7 - neg_rank) as u8, line)?;
+        parse_line(&mut board, Rank::new_from_index((7 - neg_rank) as u8).unwrap(), line)?;
     }
     parse_footer(&mut board, lines[9])?;
 
@@ -54,12 +54,12 @@ const LINE_PIECES: [&str; 14] = ["♜", "♞", "♝", "♛", "♚", "♟︎", "�
 const LINE_COLSEPS: [&str; 1] = [" "];
 const LINE_SUFFIXES: [&str; 1] = [" |"];
 
-fn parse_line(board: &mut Board, rank: u8, line: &str) -> Result<(), String> {
+fn parse_line(board: &mut Board, rank: Rank, line: &str) -> Result<(), String> {
     let remainder = line.trim();
-    let (remainder, _) = expect_prefixes(remainder, &[&format!("{}", rank + 1)])?;
+    let (remainder, _) = expect_prefixes(remainder, &[&format!("{}", rank)])?;
     let (mut remainder, _) = expect_prefixes(remainder, &LINE_PREFIXES)?;
     for file in 0..8 {
-        let coordinates = Coordinates::new_unsigned(rank, file).unwrap();
+        let coordinates = Coordinates::new(File::new_from_index(file as u8).unwrap(), rank);
 
         let (loop_remainder, _) = expect_prefixes(remainder, &LINE_COLSEPS)?;
         let (loop_remainder, piece) = expect_prefixes(loop_remainder, &LINE_PIECES)?;

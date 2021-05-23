@@ -4,7 +4,7 @@ use crate::engine::moves::{ KING_OFFSETS, BISHOP_OFFSETS, ROOK_OFFSETS, KNIGHT_O
 pub fn is_threatened_by(board: &Board, coordinates: Coordinates, color: Color) -> bool {
     // Check for threat by kings.
     for (rank_offset, file_offset) in &KING_OFFSETS {
-        if let Some(threat_coords) = coordinates.offset(*rank_offset, *file_offset) {
+        if let Some(threat_coords) = coordinates.offset(*file_offset, *rank_offset) {
             if board.get_square(threat_coords).is_occupied_by(Piece(color, Kind::King)) {
                 // Threatened by a king.
                 return true
@@ -14,7 +14,7 @@ pub fn is_threatened_by(board: &Board, coordinates: Coordinates, color: Color) -
 
     // Check for threats on the diagonals.
     for (rank_offset, file_offset) in &BISHOP_OFFSETS {
-        for threat_coords in coordinates.offsets_repeated(*rank_offset, *file_offset).into_iter() {
+        for threat_coords in coordinates.offsets_repeated(*file_offset, *rank_offset).into_iter() {
             let square = board.get_square(threat_coords);
             if square.is_occupied_by(Piece(color, Kind::Bishop)) || square.is_occupied_by(Piece(color, Kind::Queen)) {
                 // Threatened on the diagonal.
@@ -29,7 +29,7 @@ pub fn is_threatened_by(board: &Board, coordinates: Coordinates, color: Color) -
 
     // Check for threats on the rank and file.
     for (rank_offset, file_offset) in &ROOK_OFFSETS {
-        for threat_coords in coordinates.offsets_repeated(*rank_offset, *file_offset).into_iter() {
+        for threat_coords in coordinates.offsets_repeated(*file_offset, *rank_offset).into_iter() {
             let square = board.get_square(threat_coords);
             if square.is_occupied_by(Piece(color, Kind::Rook)) || square.is_occupied_by(Piece(color, Kind::Queen)) {
                 // Threatened on the diagonal.
@@ -44,7 +44,7 @@ pub fn is_threatened_by(board: &Board, coordinates: Coordinates, color: Color) -
 
     // Check for threats from knights.
     for (rank_offset, file_offset) in &KNIGHT_OFFSETS {
-        if let Some(threat_coords) = coordinates.offset(*rank_offset, *file_offset) {
+        if let Some(threat_coords) = coordinates.offset(*file_offset, *rank_offset) {
             if board.get_square(threat_coords).is_occupied_by(Piece(color, Kind::Knight)) {
                 // Threatened on the diagonal.
                 return true
@@ -55,7 +55,7 @@ pub fn is_threatened_by(board: &Board, coordinates: Coordinates, color: Color) -
     // Check for threats from pawns.
     let rank_offset = if color == Color::White { -1 } else { 1 };
     for file_offset in &[1, -1] {
-        if let Some(threat_coords) = coordinates.offset(rank_offset, *file_offset) {
+        if let Some(threat_coords) = coordinates.offset(*file_offset, rank_offset) {
             if board.get_square(threat_coords).is_occupied_by(Piece(color, Kind::Pawn)) {
                 // Threatened by a pawn.
                 return true
