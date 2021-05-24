@@ -35,7 +35,7 @@ pub const ROOK_OFFSETS: [(i8, i8); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
 
 fn add_rook_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     for (rank_offset, file_offset) in &ROOK_OFFSETS {
-        for to in from.offsets_repeated(*file_offset, *rank_offset).into_iter() {
+        for to in from.offsets_repeated(*file_offset, *rank_offset) {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) => {
                     if piece_color == color {
@@ -58,13 +58,11 @@ fn add_rook_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
 pub const KNIGHT_OFFSETS: [(i8, i8); 8] = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)];
 
 fn add_knight_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
-    for (rank_offset, file_offset) in &KNIGHT_OFFSETS {
-        if let Some(to) = from.offset(*file_offset, *rank_offset) {
-            match board.get_square(to) {
-                Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
-                _ => {
-                    boards.push(board.clone_move_piece(from, to));
-                }
+    for to in from.offsets_filter(&KNIGHT_OFFSETS) {
+        match board.get_square(to) {
+            Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
+            _ => {
+                boards.push(board.clone_move_piece(from, to));
             }
         }
     }
@@ -74,7 +72,7 @@ pub const BISHOP_OFFSETS: [(i8, i8); 4] = [(-1, -1), (-1, 1), (1, -1), (1, 1)];
 
 fn add_bishop_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     for (rank_offset, file_offset) in &BISHOP_OFFSETS {
-        for to in from.offsets_repeated(*file_offset, *rank_offset).into_iter() {
+        for to in from.offsets_repeated(*file_offset, *rank_offset) {
             match board.get_square(to) {
                 Square::Occupied(Piece(piece_color, _)) => {
                     if piece_color == color {
@@ -103,13 +101,11 @@ pub const KING_OFFSETS: [(i8, i8); 8] = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0
 
 fn add_king_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
     // Normal moves.
-    for (rank_offset, file_offset) in &KING_OFFSETS {
-        if let Some(to) = from.offset(*file_offset, *rank_offset) {
-            match board.get_square(to) {
-                Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
-                _ => {
-                    boards.push(board.clone_move_piece(from, to));
-                }
+    for to in from.offsets_filter(&KING_OFFSETS) {
+        match board.get_square(to) {
+            Square::Occupied(Piece(piece_color, _)) if piece_color == color => {},
+            _ => {
+                boards.push(board.clone_move_piece(from, to));
             }
         }
     }
@@ -154,20 +150,14 @@ fn add_kings_castle_move(board: &Board, color: Color, boards: &mut Vec<Board>) {
 }
 
 fn add_pawn_moves(board: &Board, from: Coordinates, color: Color, boards: &mut Vec<Board>) {
-    let move_direction: i8 = match color {
-        Color::White => 1,
-        _ => -1
-    };
-    let start_rank: u8 = match color {
-        Color::White => 1,
-        _ => 6
-    };
+    let (move_direction, start_rank) = if color == Color::White { (1, Rank::R2) } else { (-1, Rank::R7) };
+
     if let Some(one_forward) = from.offset(0, 1 * move_direction) {
         if let Square::Empty = board.get_square(one_forward) {
             // Forward 1.
             boards.push(board.clone_move_piece(from, one_forward));
 
-            if from.rank().index() == start_rank {
+            if from.rank() == start_rank {
                 if let Some(two_forward) = from.offset(0, 2 * move_direction) {
                     if let Square::Empty = board.get_square(two_forward) {
                         // Forward 2.
@@ -178,18 +168,16 @@ fn add_pawn_moves(board: &Board, from: Coordinates, color: Color, boards: &mut V
         }
     }
     let capture_offsets = [(move_direction, -1), (move_direction, 1)];
-    for (rank_offset, file_offset) in &capture_offsets {
-        if let Some(to) = from.offset(*file_offset, *rank_offset) {
-            if let Square::Occupied(Piece(piece_color, _)) = board.get_square(to) {
-                if piece_color != color {
-                    // Can capture this piece.
-                    boards.push(board.clone_move_piece(from, to));
-                }
-            }
-
-            if board.is_en_passant_capturable(to) {
+    for to in from.offsets_filter(&capture_offsets) {
+        if let Square::Occupied(Piece(piece_color, _)) = board.get_square(to) {
+            if piece_color != color {
+                // Can capture this piece.
                 boards.push(board.clone_move_piece(from, to));
             }
+        }
+
+        if board.is_en_passant_capturable(to) {
+            boards.push(board.clone_move_piece(from, to));
         }
     }
 }

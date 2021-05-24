@@ -102,16 +102,17 @@ impl Coordinates {
         None
     }
 
+    pub fn offsets_filter(&self, offsets: &[(i8, i8)]) -> Vec<Coordinates> {
+        offsets.iter()
+            .filter_map(|(file_offset, rank_offset)| self.offset(*file_offset, *rank_offset))
+            .collect()
+    }
+
     pub fn offsets_repeated(&self, file_offset: i8, rank_offset: i8) -> Vec<Coordinates> {
-        let mut iterated_coords = vec![];
-        for multiple in 1.. {
-            if let Some(target_coordinates) = self.offset(file_offset * multiple, rank_offset * multiple) {
-                iterated_coords.push(target_coordinates);
-            } else {
-                break
-            }
-        }
-        iterated_coords
+        (1..).map(|multiple| self.offset(file_offset * multiple, rank_offset * multiple))
+            .take_while(|opt| opt.is_some())
+            .map(|opt| opt.unwrap())
+            .collect()
     }
 
     pub fn rank(&self) -> Rank {
