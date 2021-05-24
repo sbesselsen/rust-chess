@@ -1,5 +1,5 @@
 use crate::board::{ Board, CastlingSide, Color, Coordinates, File, Kind, Piece, Rank, Square };
-use crate::engine::{ is_threatened_by, next_boards, score_board };
+use crate::engine::{ is_threatened_by, next_boards, score_board, scored_next_boards };
 
 pub fn test_all() {
     test_board_parser();
@@ -10,6 +10,7 @@ pub fn test_all() {
     test_check();
     test_score();
     test_display_board();
+    test_score_deep();
     println!("OK");
 }
 
@@ -249,4 +250,32 @@ fn test_board_parser() {
 
     let board = Board::parse_str(board_data);
     assert_eq!(board.map(|board| String::from(format!("{}", board).trim())), Ok(String::from(board_data.trim())));
+}
+
+fn test_score_deep() {
+  // TODO: Take a look at this. White thinks it can checkmate, which it cannot!
+  let board = Board::parse_str("
+    +-----------------+
+  8 |             ♖   |
+  7 |                 |
+  6 |                 |
+  5 |                 |
+  4 |                 |
+  3 |                 |
+  2 |               ♚ |
+  1 |             ♖   |
+    +-----------------+
+      a b c d e f g h").unwrap();
+
+
+  let mut steps_remaining = 10000;
+
+  let scored_boards = scored_next_boards(&board, Color::White, &mut || {
+    steps_remaining = steps_remaining - 1;
+    steps_remaining >= 0
+  });
+
+  for (score, board) in scored_boards {
+    println!("SCORE: {}\n{}\n\n", score, board);
+  }
 }
