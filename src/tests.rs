@@ -1,5 +1,6 @@
 use crate::board::{ Board, CastlingSide, Color, Coordinates, File, Kind, Piece, Rank, Square };
-use crate::engine::{ is_threatened_by, next_boards, score_board, scored_next_boards };
+use crate::engine::{ is_threatened_by, next_boards, score_board };
+use crate::util::{ GrowTree };
 
 pub fn test_all() {
     test_board_parser();
@@ -10,7 +11,9 @@ pub fn test_all() {
     test_check();
     test_score();
     test_display_board();
+    test_score_tree();
     test_score_deep();
+    test_grow_tree();
     println!("OK");
 }
 
@@ -252,6 +255,43 @@ fn test_board_parser() {
     assert_eq!(board.map(|board| String::from(format!("{}", board).trim())), Ok(String::from(board_data.trim())));
 }
 
+fn test_grow_tree() {
+  let mut tree: GrowTree<&str> = GrowTree::new("root");
+  let aap_index = tree.add_child("aap", 0);
+  let schaap_index = tree.add_child("schaap", 0);
+  let aap1 = tree.add_child("aap 1", aap_index);
+
+  let mut tree2: GrowTree<&str> = GrowTree::new("root");
+  let aap_index = tree2.add_child("aap", 0);
+  let schaap_index = tree2.add_child("schaap", 0);
+  let aap1 = tree2.add_child("aap 1", aap_index);
+
+  tree.add_tree_into(schaap_index, tree2);
+  println!("{}", tree);
+
+  if let Some(subtree) = tree.subtree(aap_index) {
+    println!("{}", subtree);
+  }
+
+  // TODO: add some tests
+  if let Some(subtree) = tree.into_subtree(aap_index) {
+    println!("{}", subtree);
+  }
+}
+
+fn test_score_tree() {
+  /*
+  let mut tree = ScoreTree::new();
+  let index = tree.add(10, ScoreTarget::Lowest, None).unwrap();
+  let index_2 = tree.add(20, ScoreTarget::Lowest, Some(index)).unwrap();
+  let index_3 = tree.add(30, ScoreTarget::Highest, Some(index_2)).unwrap();
+  let index_3a = tree.add(31, ScoreTarget::Highest, Some(index_2)).unwrap();
+  let index_4 = tree.add(30, ScoreTarget::Lowest, Some(index)).unwrap();
+  let index_5 = tree.add(50, ScoreTarget::Highest, None).unwrap();
+  println!("{}", tree);
+  */
+}
+
 fn test_score_deep() {
   // TODO: Take a look at this. White thinks it can checkmate, which it cannot!
   let board = Board::parse_str("
@@ -267,7 +307,7 @@ fn test_score_deep() {
     +-----------------+
       a b c d e f g h").unwrap();
 
-
+  /*
   let mut steps_remaining = 10000;
 
   let scored_boards = scored_next_boards(&board, Color::White, &mut || {
@@ -278,4 +318,5 @@ fn test_score_deep() {
   for (score, board) in scored_boards {
     println!("SCORE: {}\n{}\n\n", score, board);
   }
+  */
 }
