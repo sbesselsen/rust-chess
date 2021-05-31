@@ -1,3 +1,3 @@
-mod grow_tree;
+mod tree;
 
-pub use self::grow_tree::{ GrowTree };
+pub use self::tree::{ Tree, TreeInsert, VecTree };

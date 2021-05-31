@@ -1,6 +1,6 @@
 use crate::board::{ Board, CastlingSide, Color, Coordinates, File, Kind, Piece, Rank, Square };
 use crate::engine::{ is_threatened_by, next_boards, score_board };
-use crate::util::{ GrowTree };
+use crate::util::{ VecTree, TreeInsert };
 
 pub fn test_all() {
     test_board_parser();
@@ -13,7 +13,7 @@ pub fn test_all() {
     test_display_board();
     test_score_tree();
     test_score_deep();
-    test_grow_tree();
+    test_vec_tree();
     println!("OK");
 }
 
@@ -255,28 +255,30 @@ fn test_board_parser() {
     assert_eq!(board.map(|board| String::from(format!("{}", board).trim())), Ok(String::from(board_data.trim())));
 }
 
-fn test_grow_tree() {
-  let mut tree: GrowTree<&str> = GrowTree::new("root");
-  let aap_index = tree.add_child("aap", 0);
-  let schaap_index = tree.add_child("schaap", 0);
-  let aap1 = tree.add_child("aap 1", aap_index);
+fn test_vec_tree() {
+  let mut tree: VecTree<&str> = VecTree::new();
+  let root_index = tree.add("root", None);
+  let aap_index = tree.add("aap", Some(root_index));
+  let _schaap_index = tree.add("schaap", Some(root_index));
+  let _aap1 = tree.add("aap 1", Some(aap_index));
 
-  let mut tree2: GrowTree<&str> = GrowTree::new("root");
-  let aap_index = tree2.add_child("aap", 0);
-  let schaap_index = tree2.add_child("schaap", 0);
-  let aap1 = tree2.add_child("aap 1", aap_index);
+  let mut tree2: VecTree<&str> = VecTree::new();
+  let root_index = tree2.add("root", None);
+  let aap_index = tree2.add("aap", Some(root_index));
+  let schaap_index = tree2.add("schaap", Some(root_index));
+  let _aap1 = tree2.add("aap 1", Some(aap_index));
 
-  tree.add_tree_into(schaap_index, tree2);
+  tree.add_tree(tree2, Some(schaap_index));
   println!("{}", tree);
 
-  if let Some(subtree) = tree.subtree(aap_index) {
-    println!("{}", subtree);
-  }
+  // if let Some(subtree) = tree.subtree(aap_index) {
+  //   println!("{}", subtree);
+  // }
 
-  // TODO: add some tests
-  if let Some(subtree) = tree.into_subtree(aap_index) {
-    println!("{}", subtree);
-  }
+  // // TODO: add some tests
+  // if let Some(subtree) = tree.into_subtree(aap_index) {
+  //   println!("{}", subtree);
+  // }
 }
 
 fn test_score_tree() {
@@ -294,6 +296,7 @@ fn test_score_tree() {
 
 fn test_score_deep() {
   // TODO: Take a look at this. White thinks it can checkmate, which it cannot!
+  /*
   let board = Board::parse_str("
     +-----------------+
   8 |             ♖   |
@@ -307,7 +310,6 @@ fn test_score_deep() {
     +-----------------+
       a b c d e f g h").unwrap();
 
-  /*
   let mut steps_remaining = 10000;
 
   let scored_boards = scored_next_boards(&board, Color::White, &mut || {
