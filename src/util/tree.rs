@@ -2,23 +2,21 @@ use std::fmt;
 use std::collections::{ HashMap };
 use std::hash::{ Hash };
 
-pub trait Tree<'a>
-    where Self: 'a {
+pub trait Tree {
     type TreeItem;
     type Index: Copy + Eq + Hash;
 
-    fn children(&'a self, parent: Option<Self::Index>) -> Vec<(Self::Index, &'a Self::TreeItem)>;
+    fn children<'a>(&'a self, parent: Option<Self::Index>) -> Vec<(Self::Index, &'a Self::TreeItem)>;
 
-    fn parent(&'a self, index: Self::Index) -> Option<(Self::Index, &'a Self::TreeItem)>;
+    fn parent<'a>(&'a self, index: Self::Index) -> Option<(Self::Index, &'a Self::TreeItem)>;
 
     fn into_hierarchy(self) -> Vec<(Self::Index, Option<Self::Index>, Self::TreeItem)>;
 }
 
-pub trait TreeInsert<'a>: Tree<'a>
-    where Self: 'a, {
+pub trait TreeInsert: Tree {
     fn add(&mut self, item: Self::TreeItem, parent: Option<Self::Index>) -> Self::Index;
 
-    fn add_tree<U: Tree<'a, TreeItem=Self::TreeItem>>(&mut self, tree: U, parent: Option<Self::Index>) -> Vec<Self::Index> {
+    fn add_tree<U: Tree<TreeItem=Self::TreeItem>>(&mut self, tree: U, parent: Option<Self::Index>) -> Vec<Self::Index> {
         let mut indices = vec![];
         let mut index_mapping = HashMap::new();
 
@@ -59,12 +57,11 @@ impl<T> VecTree<T> {
     }
 }
 
-impl<'a, T> Tree<'a> for VecTree<T>
-    where VecTree<T>: 'a {
+impl<T> Tree for VecTree<T> {
     type TreeItem = T;
     type Index = usize;
 
-    fn children(&'a self, parent: Option<usize>) -> Vec<(Self::Index, &'a Self::TreeItem)> {
+    fn children<'a>(&'a self, parent: Option<usize>) -> Vec<(Self::Index, &'a Self::TreeItem)> {
         let indices = match parent {
             Some(parent_index) => &self.children_indices[parent_index],
             None => &self.root_indices
@@ -73,7 +70,7 @@ impl<'a, T> Tree<'a> for VecTree<T>
         indices.iter().map(|&child_index| (child_index, &self.items[child_index])).collect()
     }
 
-    fn parent(&'a self, index: Self::Index) -> Option<(Self::Index, &'a Self::TreeItem)> {
+    fn parent<'a>(&'a self, index: Self::Index) -> Option<(Self::Index, &'a Self::TreeItem)> {
         match self.parent_indices.get(index) {
             Some(Some(index)) => Some((*index, &self.items[*index])),
             _ => None
@@ -86,8 +83,7 @@ impl<'a, T> Tree<'a> for VecTree<T>
     }
 }
 
-impl<'a, T> TreeInsert<'a> for VecTree<T>
-    where VecTree<T>: 'a {
+impl<T> TreeInsert for VecTree<T> {
     fn add(&mut self, item: T, parent: Option<Self::Index>) -> Self::Index {
         let index = self.items.len();
         self.items.push(item);
