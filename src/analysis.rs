@@ -175,10 +175,8 @@ pub fn next_boards(board: &Board, color: Color) -> Vec<Board> {
     }
 
     // Return the boards which are acceptable (not in check).
+    boards.retain(|board| !is_checked(&board, color));
     boards
-        .into_iter()
-        .filter(|board| !is_checked(&board, color))
-        .collect()
 }
 
 pub const ROOK_OFFSETS: [(i8, i8); 4] = [(-1, 0), (1, 0), (0, -1), (0, 1)];
