@@ -1,9 +1,9 @@
+mod analysis;
 mod board;
-mod engine;
+mod parser;
 mod tests;
-mod util;
 
-use tests::{ test_all };
+use tests::test_all;
 
 fn main() {
     test_all();

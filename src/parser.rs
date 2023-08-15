@@ -1,6 +1,13 @@
-use crate::board::{ Board, Color, CastlingSide, Coordinates, File, Kind, Piece, Rank, Square };
+use crate::board::{Board, CastlingSide, Color, Coordinates, File, Kind, Piece, Rank, Square};
 
-pub fn parse_board(input: &str) -> Result<Board, String> {
+#[derive(Debug, PartialEq, Clone, Hash)]
+pub struct ParseBoardError(String);
+
+pub fn parse_board(input: &str) -> Result<Board, ParseBoardError> {
+    parse_board_inner(input).map_err(|err| ParseBoardError(err))
+}
+
+pub fn parse_board_inner(input: &str) -> Result<Board, String> {
     let lines: Vec<&str> = input.trim().split("\n").collect();
 
     if lines.len() != 11 {
@@ -11,7 +18,11 @@ pub fn parse_board(input: &str) -> Result<Board, String> {
 
     parse_header(&mut board, lines[0])?;
     for (neg_rank, line) in (&lines[1..=8]).iter().enumerate() {
-        parse_line(&mut board, Rank::new_from_index((7 - neg_rank) as u8).unwrap(), line)?;
+        parse_line(
+            &mut board,
+            Rank::new_from_index((7 - neg_rank) as u8).unwrap(),
+            line,
+        )?;
     }
     parse_footer(&mut board, lines[9])?;
 
@@ -22,7 +33,8 @@ const HEADER_FOOTER_PREFIXES: [&str; 1] = ["+-"];
 const HEADER_FOOTER_MIDDLE: [&str; 1] = ["-------------"];
 const HEADER_FOOTER_CASTLING_YES: &str = "v";
 const HEADER_FOOTER_CASTLING_NO: &str = "-";
-const HEADER_FOOTER_CASTLING_MARKERS: [&str; 2] = [HEADER_FOOTER_CASTLING_YES, HEADER_FOOTER_CASTLING_NO];
+const HEADER_FOOTER_CASTLING_MARKERS: [&str; 2] =
+    [HEADER_FOOTER_CASTLING_YES, HEADER_FOOTER_CASTLING_NO];
 const HEADER_FOOTER_SUFFIXES: [&str; 1] = ["-+"];
 
 fn parse_header(board: &mut Board, line: &str) -> Result<(), String> {
@@ -50,7 +62,9 @@ fn parse_header_or_footer(board: &mut Board, color: Color, line: &str) -> Result
 }
 
 const LINE_PREFIXES: [&str; 1] = [" |"];
-const LINE_PIECES: [&str; 14] = ["♜", "♞", "♝", "♛", "♚", "♟︎", "♖", "♘", "♗", "♕", "♔", "♙", " ", "*"];
+const LINE_PIECES: [&str; 14] = [
+    "♜", "♞", "♝", "♛", "♚", "♟︎", "♖", "♘", "♗", "♕", "♔", "♙", " ", "*",
+];
 const LINE_COLSEPS: [&str; 1] = [" "];
 const LINE_SUFFIXES: [&str; 1] = [" |"];
 
@@ -81,7 +95,9 @@ fn parse_line(board: &mut Board, rank: Rank, line: &str) -> Result<(), String> {
                 "♔" => Square::Occupied(Piece(Color::White, Kind::King)),
                 "♙" => Square::Occupied(Piece(Color::White, Kind::Pawn)),
                 " " => Square::Empty,
-                _ => { return Err(String::from(format!("Unexpected piece: {}", piece))); }
+                _ => {
+                    return Err(String::from(format!("Unexpected piece: {}", piece)));
+                }
             };
             board.set_square(coordinates, square);
         }
@@ -95,14 +111,19 @@ fn parse_line(board: &mut Board, rank: Rank, line: &str) -> Result<(), String> {
 fn try_prefixes<'a, 'b>(input: &'a str, options: &'b [&str]) -> Option<(&'a str, &'b str)> {
     for option in options {
         match input.strip_prefix(option) {
-            Some(suffix) => { return Some((suffix, option)); },
+            Some(suffix) => {
+                return Some((suffix, option));
+            }
             _ => {}
         }
     }
     None
 }
 
-fn expect_prefixes<'a, 'b>(input: &'a str, options: &'b [&str]) -> Result<(&'a str, &'b str), String> {
+fn expect_prefixes<'a, 'b>(
+    input: &'a str,
+    options: &'b [&str],
+) -> Result<(&'a str, &'b str), String> {
     if let Some(result) = try_prefixes(input, options) {
         Ok(result)
     } else {
